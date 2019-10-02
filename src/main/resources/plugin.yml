@@ -1,0 +1,28 @@
+name: SurvivalGames
+version: ${project.version}
+main: uk.co.hexillium.compsocsurvivalgames.SurvivalGames
+api-version: "1.14"
+commands:
+  survivalgame:
+    aliases:
+      - sg
+      - hg
+      - survivalgames
+      - survgames
+      - survivalg
+      - sgame
+      - sgames
+    description: Main Survival Games command.
+    usage: /<command> [args]
+    permission: survivalgames.main
+
+permissions:
+  survivalgames.main:
+    description: Allows use of the base command
+    default: true
+  survivalgames.play:
+    description: Allows players to use this plugin
+    default: true
+  survivalgames.admin:
+    description: Allows admins to use this plugin
+    default: op
