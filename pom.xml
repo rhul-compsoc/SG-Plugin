@@ -73,16 +73,19 @@
             <scope>provided</scope>
         </dependency>
 
-        <!--
 
         <dependency>
-            <groupId>com.sample</groupId>
-            <artifactId>sample</artifactId>
-            <version>1.0</version>
+            <!--
+            Should be obtained from here, and saved locally,
+            inside the otherwise empty 'externalJars' folder at the root
+             https://www.spigotmc.org/resources/rollbackcore-1-4-7-1-14-4.18517/
+             -->
+            <groupId>net.shadowxcore</groupId>
+            <artifactId>rollbackcore</artifactId>
+            <version>3.4.3</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/src/main/resources/Name_Your_JAR.jar</systemPath>
+            <systemPath>${project.basedir}/externalJars/RollbackCore-3.4.3.jar</systemPath>
         </dependency>
 
-        -->
     </dependencies>
 </project>

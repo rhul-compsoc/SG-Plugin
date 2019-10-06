@@ -1,11 +1,15 @@
 package uk.co.hexillium.compsocsurvivalgames;
 
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.entity.Player;
+import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import uk.co.hexillium.compsocsurvivalgames.entities.Arena;
+import uk.co.hexillium.compsocsurvivalgames.entities.ChestPoint;
 
 public class ArenaModifications implements Listener {
 
@@ -15,40 +19,74 @@ public class ArenaModifications implements Listener {
         this.sg = sg;
     }
 
+    /**
+     * Checks to make sure that the Player in question is inside an arena
+     * @param event the
+     * @return the arena if they're in one, else null
+     */
+    private Arena ensureInArena(Location l, Player p, Cancellable event){
+        Arena arena = findArena(l);
+        if (arena == null){
+            if (sg.isUserInEditMode(p)) p.sendMessage(ChatColor.RED + "[SG] You're in edit mode, but we can't find an arena here.");
+            return null;
+        } else {
+            return arena;
+        }
+    }
+
+
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event){
-        //need to check to see if the player is in edit mode
-
+        Arena arena = ensureInArena(event.getBlock().getLocation(), event.getPlayer(), event);
+        if (arena == null) return;
+        if (arena.getState().equals(Arena.ArenaState.ENABLED)) return; //we can handle this in the GameLogic class; this class is only for the out-of-game edits.
+        if (!sg.isUserInEditMode(event.getPlayer())){
+            event.setCancelled(true);
+            event.getPlayer().sendMessage(ChatColor.RED + "You are trying to modify an arena that is in the " + ChatColor.AQUA + arena.getState() + ChatColor.RED + " state, but you are not in edit mode.");
+            return;
+        }
+        if (!arena.getState().equals(Arena.ArenaState.CONFIGURING)) {
+            event.setCancelled(true);
+            event.getPlayer().sendMessage(ChatColor.RED + "This arena is currently in the " + ChatColor.AQUA + arena.getState() + ChatColor.RED + " state, and needs to be in CONFIGURE mode to be edited.");
+            return;
+        }
+        arena.setHasBeenModified(true);
+        ChestPoint cp = arena.getChestPoint(event.getBlock().getLocation());
+        if (cp != null){
+            arena.removeChestPoint(cp);
+            event.getPlayer().sendMessage(ChatColor.GOLD + "You have just broken a tier " + cp.getTier() + " chest spawn point");
+        }
     }
+
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event){
-        //need to check to se if the player is in edit mode
-        Arena arena = findArena(event.getBlock().getLocation());
+        Arena arena = ensureInArena(event.getBlock().getLocation(), event.getPlayer(), event);
         if (arena == null) return;
-        if (arena.getState() == Arena.ArenaState.DISABLED){
+        if (arena.getState().equals(Arena.ArenaState.ENABLED)) return; //we can handle this in the GameLogic class; this class is only for the out-of-game edits.
+        if (!sg.isUserInEditMode(event.getPlayer())){
             event.setCancelled(true);
+            event.getPlayer().sendMessage(ChatColor.RED + "You are trying to modify an arena that is in the " + ChatColor.AQUA + arena.getState() + ChatColor.RED + " state, but you are not in edit mode.");
+            return;
         }
-
+        if (!arena.getState().equals(Arena.ArenaState.CONFIGURING)) {
+            event.setCancelled(true);
+            event.getPlayer().sendMessage(ChatColor.RED + "This arena is currently in the " + ChatColor.AQUA + arena.getState() + ChatColor.RED + " state, and needs to be in CONFIGURE mode to be edited.");
+            return;
+        }
+        arena.setHasBeenModified(true);
+        int tierNum = sg.getConfigManager().getTierFromMaterial(event.getBlockPlaced().getType());
+        if (tierNum >= 0){
+            arena.addChestPoint(new ChestPoint(event.getBlock().getLocation(), tierNum == 0 ? 1 : 0.6, tierNum));
+            event.getPlayer().sendMessage(ChatColor.DARK_GREEN + "You just added a tier " + tierNum + " chest to the arena.");
+        }
     }
 
     private Arena findArena(Location location){
         for (Arena arena : sg.getArenas()){
-            if (isInBounds(location, arena)) return arena;
+            if (arena.isInBounds(location)) return arena;
         }
         return null;
-    }
-
-    private boolean isInBounds(Location location, Arena arena){
-        double[] lowest = {Math.min(arena.getMin().getX(), arena.getMax().getX()),
-                            Math.min(arena.getMin().getY(), arena.getMax().getY()),
-                            Math.min(arena.getMin().getZ(), arena.getMax().getZ())};
-        double[] highest = {Math.max(arena.getMin().getX(), arena.getMax().getX()),
-                            Math.max(arena.getMin().getY(), arena.getMax().getY()),
-                            Math.max(arena.getMin().getZ(), arena.getMax().getZ())};
-        return lowest[0] < location.getX() && location.getX() < highest[0] &&
-                lowest[1] < location.getY() && location.getY() < highest[1] &&
-                lowest[2] < location.getZ() && location.getZ() < highest[2];
     }
 
 }

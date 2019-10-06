@@ -24,4 +24,6 @@ public class Fighter extends Participant{
         player.setGameMode(GameMode.SURVIVAL);
     }
 
+
+
 }

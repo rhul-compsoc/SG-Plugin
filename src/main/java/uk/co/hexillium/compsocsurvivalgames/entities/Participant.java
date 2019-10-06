@@ -69,4 +69,18 @@ public abstract class Participant{
         player.setGameMode(oldGameMode);
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Participant that = (Participant) o;
+
+        return player.equals(that.player);
+    }
+
+    @Override
+    public int hashCode() {
+        return player.hashCode();
+    }
 }

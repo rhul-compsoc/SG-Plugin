@@ -1,4 +1,3 @@
-helpMessage: "just a filler atm"
-#some comments
-#to test stuff
-somethingElse: 4
+tierZeroChestBlock: WHITE_SHULKER_BOX
+tierOneChestBlock: LIGHT_BLUE_SHULKER_BOX
+tierTwoChestBlock: YELLOW_SHULKER_BOX

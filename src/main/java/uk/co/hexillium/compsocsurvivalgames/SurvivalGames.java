@@ -9,30 +9,29 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import uk.co.hexillium.compsocsurvivalgames.entities.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 public final class SurvivalGames extends JavaPlugin {
 
     public static File plFolder;
+    public static SurvivalGames instance;
 
     private List<Arena> arenas;
-    private List<Game> games;
     private List<LootTable> lootTables;
-    private List<UUID> adminsInEditMode;
+    private HashSet<UUID> adminsInEditMode;
 
     CommandManager commandManager = new CommandManager(this);
 
     private GameLogic gl;
     private GameManager gm;
     private ArenaModifications am;
+    private ConfigManager config;
 
     @Override
     public void onLoad(){
@@ -44,12 +43,13 @@ public final class SurvivalGames extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        instance = this;
         plFolder = this.getDataFolder();
         saveDefaultConfig();
         //this.getConfig().options().copyDefaults(true);
         saveConfig();
 
-        games = new ArrayList<>();
+        this.adminsInEditMode = new HashSet<>();
 
         File lootTableFolder = new File(plFolder.getPath() + File.separator + "loottables" + File.separator);
         lootTableFolder.mkdirs();
@@ -59,6 +59,7 @@ public final class SurvivalGames extends JavaPlugin {
         arenaFolder.mkdirs();
         this.arenas = ConfigManager.loadArenas(arenaFolder);
 
+        this.config = new ConfigManager(this);
 
         gm = new GameManager(this);
         gl = new GameLogic(this, gm);
@@ -74,7 +75,7 @@ public final class SurvivalGames extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        File lootTableFolder = new File(plFolder.getPath() + File.separator + "arenas" + File.separator);
+        File lootTableFolder = new File(plFolder.getPath() + File.separator + "loottables" + File.separator);
         ConfigManager.saveLootTables(lootTableFolder, lootTables);
         File arenaFolder = new File(plFolder.getPath() + File.separator + "arenas" + File.separator);
         ConfigManager.saveArenas(arenaFolder, arenas);
@@ -86,6 +87,7 @@ public final class SurvivalGames extends JavaPlugin {
         switch (command.getName()){
             case "survivalgames":
                 if (args.length == 0 || !commandManager.fire(sender, args)){
+                    sender.sendMessage("[join, leave, arena, toggleedit, game]");
                     //send help
                 }
                 return true;
@@ -93,6 +95,40 @@ public final class SurvivalGames extends JavaPlugin {
                 sender.sendMessage(ChatColor.RED + "Failed to process command.");
                 return true;
         }
+    }
+
+    public boolean isUserInEditMode(Player player){
+        return isUserInEditMode(player.getUniqueId());
+    }
+
+    public boolean isUserInEditMode(UUID uuid){
+        return adminsInEditMode.contains(uuid);
+    }
+
+    /**
+     * Adds a user into the edit mode
+     * @param player the player to add
+     * @return true if not already present, false if already present.
+     */
+    public boolean addUserToEditMode(Player player){
+        return addUserToEditMode(player.getUniqueId());
+    }
+
+    /**
+     * Adds a user by their id to the edit mode
+     * @param uuid the player's UUID to add
+     * @return true if not already present, false if already present
+     */
+    public boolean addUserToEditMode(UUID uuid){
+        return adminsInEditMode.add(uuid);
+    }
+
+    public void removeUserFromEditMode(Player player){
+        removeUserFromEditMode(player.getUniqueId());
+    }
+
+    public void removeUserFromEditMode(UUID uuid){
+        adminsInEditMode.remove(uuid);
     }
 
     public static File getPlFolder() {
@@ -103,10 +139,6 @@ public final class SurvivalGames extends JavaPlugin {
         return arenas;
     }
 
-    public List<Game> getGames() {
-        return games;
-    }
-
     public List<LootTable> getLootTables() {
         return lootTables;
     }
@@ -115,20 +147,32 @@ public final class SurvivalGames extends JavaPlugin {
         return commandManager;
     }
 
-    public List<UUID> getAdminsInEditMode() {
+    public HashSet<UUID> getAdminsInEditMode() {
         return adminsInEditMode;
     }
 
-    public GameLogic getGl() {
+    public Arena getArenaByName(String name){
+        return arenas.stream().filter(arena -> arena.getName().equalsIgnoreCase(name)).findFirst().orElse(null);
+    }
+
+    public LootTable getLootTableByName(String name){
+        return lootTables.stream().filter(table -> table.getName().equalsIgnoreCase(name)).findFirst().orElse(null);
+    }
+
+    public GameLogic getGameLogic() {
         return gl;
     }
 
-    public GameManager getGm() {
+    public GameManager getGameManager() {
         return gm;
     }
 
-    public ArenaModifications getAm() {
+    public ArenaModifications getArenaModificationManager() {
         return am;
+    }
+
+    public ConfigManager getConfigManager() {
+        return config;
     }
 
     public void addArena(Arena arena){

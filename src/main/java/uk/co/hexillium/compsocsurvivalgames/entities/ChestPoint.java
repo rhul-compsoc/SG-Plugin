@@ -47,6 +47,21 @@ public class ChestPoint implements ConfigurationSerializable {
         return new ChestPoint(map);
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ChestPoint that = (ChestPoint) o;
+
+        return location.equals(that.location);
+    }
+
+    @Override
+    public int hashCode() {
+        return location.hashCode();
+    }
+
     /**
      * Required for the interface ConfigurationSerializable
      * @return list of config attributes

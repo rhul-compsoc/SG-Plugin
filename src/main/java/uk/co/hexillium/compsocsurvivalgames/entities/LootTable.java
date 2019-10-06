@@ -24,13 +24,12 @@ public class LootTable implements ConfigurationSerializable {
     transient double tierOneWeight;
     transient double tierTwoWeight;
 
-    transient double totalWeight;
-
     private LootTable(Map<String, Object> map){
         this.name = (String) map.get("name");
         this.tierZero = (List<LootNode>) map.get("tierZeroLoot");
         this.tierOne = (List<LootNode>) map.get("tierOneLoot");
         this.tierTwo = (List<LootNode>) map.get("tierTwoLoot");
+        recalculateTotalWeights();
     }
 
     public LootTable(String name){
@@ -44,6 +43,7 @@ public class LootTable implements ConfigurationSerializable {
         this.tierZero = tierZero;
         this.tierOne = tierOne;
         this.tierTwo = tierTwo;
+        recalculateTotalWeights();
     }
 
     public void addAll(List<LootNode> nodes, int tier){
@@ -85,6 +85,7 @@ public class LootTable implements ConfigurationSerializable {
         tierZero.forEach(ln -> tierZeroWeight += ln.getWeight());
         tierOne.forEach(ln -> tierOneWeight += ln.getWeight());
         tierTwo.forEach(ln -> tierTwoWeight += ln.getWeight());
+        System.out.println(tierZeroWeight + " " + tierOneWeight + " " + tierTwoWeight);
     }
 
     public ItemStack generateLoot(int tier){
@@ -104,13 +105,13 @@ public class LootTable implements ConfigurationSerializable {
         final double threshold = random.nextDouble() * Math.abs(totalWeight);
         double rollingCount = 0;
         for (LootNode node : lootTable){
+            rollingCount += node.getWeight();
             if (rollingCount > threshold){
                 return new ItemStack(node.material,
                         getRandIncl(node.getMinCount(), node.getMaxCount()));
             }
-            rollingCount += node.getWeight();
         }
-        if (totalWeight < 0){
+        if (totalWeight <= 0){
             throw new IllegalStateException("Cannot generate loot");
         }
         recalculateTotalWeights();
@@ -118,11 +119,26 @@ public class LootTable implements ConfigurationSerializable {
     }
 
     private int getRandIncl(int min, int max){
-        return (random.nextInt((max - min) + 1)) - min;
+        return (random.nextInt((max - min) + 1)) + min;
     }
 
     public static LootTable deserialize(Map<String, Object> map){
         return new LootTable(map);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        LootTable lootTable = (LootTable) o;
+
+        return name.equals(lootTable.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return name.hashCode();
     }
 
     @Override

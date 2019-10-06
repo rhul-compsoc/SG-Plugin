@@ -3,7 +3,7 @@ version: ${project.version}
 main: uk.co.hexillium.compsocsurvivalgames.SurvivalGames
 api-version: "1.14"
 commands:
-  survivalgame:
+  survivalgames:
     aliases:
       - sg
       - hg
